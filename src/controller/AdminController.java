@@ -1,6 +1,8 @@
 package controller;
 
+import dao.PlatoDAO;
 import db.Conexion;
+import dto.PlatoDTO;
 import java.sql.Connection;
 import java.util.Scanner;
 
@@ -81,4 +83,115 @@ public class AdminController {
     subcontrolador de mesas
     subcontrolador de categorias
     */
+
+    public void menuPlatos(){
+        int opc=0;
+        PlatoDTO plato= new PlatoDTO();
+        PlatoDAO p = new PlatoDAO(conexion);
+        int idABuscar;
+        do {
+            System.out.println("Gestión de platos:");
+            System.out.println("1. Insertar plato");
+            System.out.println("2. Modificar plato");
+            System.out.println("3. Eliminar plato");
+            System.out.println("4. Listar platos");
+            System.out.println("5. Buscar por ID");
+            System.out.println("6. Obtener top 5 platos más vendidos");
+            System.out.println("7. Obtener platos con baja rotación");
+            System.out.println("8. Salir");
+            
+            try {
+                opc= Integer.parseInt(entrada.nextLine());    
+            } catch (NumberFormatException e) {
+                System.out.println("Inserta un número válido");
+            }
+            switch (opc) {
+                case 1:
+                    System.out.println("Inserte el nombre del plato");
+                    plato.setNombre(entrada.nextLine());
+                    System.out.println("Inserte la descripción del plato (opcional)");
+                    plato.setDescripcion(entrada.nextLine());
+                    System.out.println("Inserte el precio del plato");
+                    plato.setPrecio(Double.parseDouble(entrada.nextLine()));
+                    if(plato.validarDatos()){
+                        boolean insertadoOk=p.insertarPlato(plato);
+                        if(insertadoOk){
+                            System.out.println("Se ha insertado el plato correctamente");
+                            plato.toString();
+                        } else{
+                            System.out.println("Error al insertar el plato");
+                        }
+                    } else{
+                        System.out.println("Los datos introducidos no son válidos");
+                    }
+                    break;
+                case 2:
+                    System.out.println("Inserta el ID del plato a modificar:");
+                    idABuscar= Integer.parseInt(entrada.nextLine());
+                    plato=p.buscarPorId(idABuscar);
+                    if(plato!=null){
+                        System.out.println("Plato encontrado");
+                        System.out.println(plato.toString());
+                        System.out.println("Introduzca el nombre modificado");
+                        plato.setNombre(entrada.nextLine());
+                        System.out.println("Introduzca la descripción modificada");
+                        plato.setDescripcion(entrada.nextLine());
+                        System.out.println("Introduzca el precio modificado");
+                        plato.setPrecio(Double.parseDouble(entrada.nextLine()));
+                        boolean modificarOk=p.modificarPlato(plato);
+                        if(modificarOk){
+                            System.out.println("Se ha modificado el plato correctamente");
+                            System.out.println(plato.toString());
+                        } else{
+                            System.out.println("Error al modificar el plato");
+                        }
+                    } else{
+                        System.out.println("Los datos introducidos no son válidos");
+                    }
+                    break;
+                case 3:
+                    System.out.println("Introduce el ID del plato que quiere eliminar");
+                    idABuscar=Integer.parseInt(entrada.nextLine());
+                    plato=p.buscarPorId(idABuscar);
+                    if(plato!=null){
+                        System.out.println("Plato encontrado, eliminando plato...");
+                        p.eliminarPlato(plato);
+                    } else{
+                        System.out.println("Plato no encontrado");
+                    }
+                    break;
+                case 4:
+                    System.out.println("Lista de platos:");
+                    p.listarPlatos();
+                    break;
+                case 5:
+                    System.out.println("Introduzca el ID del plato a buscar:");
+                    idABuscar=Integer.parseInt(entrada.nextLine());
+                    plato=p.buscarPorId(idABuscar);
+                    if(plato!=null){
+                        System.out.println("Plato encontrado:");
+                        System.out.println(plato.toString());
+                    } else{
+                        System.out.println("Plato no encontrado");
+                    }
+                    break;
+                case 6:
+                    System.out.println("Top 5 platos más vendidos:");
+                    p.obtenerTop5Ventas();
+                    break;
+                case 7:
+                    System.out.println("Sobre qué mes quieres realizar la consulta?");
+                    p.obtenerNPlatosSinVentas(Integer.parseInt(entrada.nextLine()));
+                    break;
+                case 8:
+                    System.out.println("Saliendo...");
+                    break;
+                default:
+                    System.out.println("Introduzca una opción válida");
+            }
+        } while (opc!=8);
+        
+        
+
+    }
 }
