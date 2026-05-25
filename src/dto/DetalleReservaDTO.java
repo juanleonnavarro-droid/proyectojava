@@ -11,7 +11,17 @@ import util.Verificable;
 public class DetalleReservaDTO implements Verificable{
     private int id, id_reserva, id_plato, cantidad;
     private double precio_plato;
+
+    /**
+     * Constructor vació, si se quieren insertar datos será usando los setters
+     */
+
     public DetalleReservaDTO(){}
+
+    /**
+     * Getters y setters
+     */
+
     public int getId() {
         return id;
     }
@@ -43,10 +53,20 @@ public class DetalleReservaDTO implements Verificable{
         this.precio_plato = precio_plato;
     }
 
+    /**
+     * Método toString para formatear los atributos de la clase
+     * @return String
+     */
+
     @Override
     public String toString() {
         return "ID del detalle de la reserva: "+this.id+" Id de Reserva: "+this.id_reserva+" ID del plato: "+this.id_plato+" Cantidad: "+this.cantidad+" Precio del plato: "+this.precio_plato;
     }
+
+    /**
+     * Método validarDatos para verificar que el campo cantidad es válido
+     * @return boolean
+     */
 
     @Override
     public boolean validarDatos() {
