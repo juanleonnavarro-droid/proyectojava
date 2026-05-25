@@ -1,13 +1,11 @@
 package controller;
 
 import dao.ClienteDAO;
+import dao.ReservaDAO;
 import db.Conexion;
 import dto.ClienteDTO;
 import dto.ReservaDTO;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -77,34 +75,16 @@ public class ReservaController {
                 }
             } while (fechaHoraReserva == null);
             ReservaDTO reserva = new ReservaDTO();
+            ReservaDAO r= new ReservaDAO(conexion);
             reserva.setDniCliente(cliente.getDni());
             reserva.setFecha(fechaHoraReserva);
             reserva.setComensales(numComensales);
-            if(crearReserva(reserva)) System.out.println("Reserva creada con éxito");
+            if(r.registrarReservaAutomatica(reserva, zona, numComensales)) System.out.println("Reserva creada con éxito");
             else System.out.println("La reserva no se creó correctamente");
         } else{
             System.out.println("Cliente no registrado, regístrese antes de hacer una reserva");
         }
     }
 
-    public boolean crearReserva(ReservaDTO r) {
-        String sql = "INSERT INTO RESERVA (DNI_CLIENTE, ID_MESA, ID_EMPLEADO, FECHA, COMENSALES) "
-                + "SELECT ?, m.ID, (SELECT ID FROM EMPLEADO WHERE CARGO = 'Camarero' LIMIT 1), ?, ? "
-                + "FROM MESA m "
-                + "WHERE m.UBICACION = ? AND m.CAPACIDAD_MAXIMA >= ? AND m.ESTADO = 'Libre' "
-                + "LIMIT 1";
-        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
-            ps.setString(1, r.getDniCliente());
-            ps.setTimestamp(2, Timestamp.valueOf(r.getFecha()));
-            ps.setInt(3, r.getComensales());
-            ps.setString(4, zona);
-            ps.setInt(5, r.getComensales());
-            int filasInsertadas = ps.executeUpdate();
-            return filasInsertadas > 0;
-        } catch (SQLException e) {
-            System.out.println("Error al intentar registrar la reserva: " + e.getMessage());
-            return false;
-
-        }
-    }
+    
 }

@@ -1,9 +1,11 @@
 package controller;
 
 import dao.EmpleadoDAO;
+import dao.MesaDAO;
 import dao.PlatoDAO;
 import db.Conexion;
 import dto.EmpleadoDTO;
+import dto.MesaDTO;
 import dto.PlatoDTO;
 import java.sql.Connection;
 import java.time.DateTimeException;
@@ -315,7 +317,268 @@ public class AdminController {
                 default:
                     System.out.println("Inserta un número válido");
             }
-        } while (opc!=6);
+        } while (opc != 6);
 
+    }
+
+    public void menuMesas() {
+        String zona="";
+        String estado="";
+        int opc = 0;
+        MesaDTO mesa = new MesaDTO();
+        MesaDAO m = new MesaDAO(conexion);
+        int idABuscar;
+        do {
+            System.out.println("Gestión de mesas:");
+            System.out.println("1. Insertar mesa");
+            System.out.println("2. Modificar mesa");
+            System.out.println("3. Eliminar mesa");
+            System.out.println("4. Buscar mesa por ID");
+            System.out.println("5. Actualizar estado");
+            System.out.println("6. Ver ocupación por zona");
+            System.out.println("7. Listar todas las mesas");
+            System.out.println("8. Salir");
+            try {
+                opc = Integer.parseInt(entrada.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.println("Introduce un número válido");
+            }
+            switch (opc) {
+                case 1:
+                    System.out.println("Inserte la capacidad máxima");
+                    try {
+                        mesa.setCapacidadMaxima(Integer.parseInt(entrada.nextLine()));
+                    } catch (NumberFormatException e) {
+                        System.out.println("Introduce un número válido");
+                        break;
+                    }
+                    System.out.println("En qué zona está la mesa?? (1. Terraza, 2. Salón Principal, 3. Zona Privada)");
+                    try {
+                        opc = Integer.parseInt(entrada.nextLine());
+                        switch (opc) {
+                            case 1:
+                                mesa.setUbicacion("Terraza");
+                                System.out.println("Zona: Terraza seleccionada");
+                                break;
+                            case 2:
+                                mesa.setUbicacion("Salon principal");
+                                System.out.println("Zona: Salón Principal seleccionada");
+                                break;
+                            case 3:
+                                mesa.setUbicacion("Zona Privada");
+                                System.out.println("Zona: Zona Privada seleccionada");
+                                break;
+                            default:
+                                System.out.println("Elija una opción válida");
+                        }
+                    } catch (NumberFormatException e) {
+                        System.out.println("Elija un número válido");
+                    }
+                    mesa.setEstado("Libre");
+                    if (mesa.validarDatos()) {
+                        boolean insertarOk = m.insertarMesa(mesa);
+                        if (insertarOk) {
+                            System.out.println("Mesa insertada correctamente");
+                            System.out.println(mesa.toString());
+                        } else {
+                            System.out.println("Error al insertar la mesa");
+                        }
+                    } else {
+                        System.out.println("Los datos introducidos no son válidos");
+                    }
+                    break;
+                case 2:
+                    System.out.println("Inserte el ID de la mesa a modificar");
+                    try {
+                        idABuscar = Integer.parseInt(entrada.nextLine());
+                    } catch (NumberFormatException e) {
+                        System.out.println("Inserte un número como ID");
+                        break;
+                    }
+                    mesa = m.buscarMesaPorId(idABuscar);
+                    if (mesa != null) {
+                        System.out.println("Mesa encontrada");
+                        System.out.println(mesa.toString());
+                        System.out.println("Introduce la capacidad máxima modificada");
+                        try {
+                            mesa.setCapacidadMaxima(Integer.parseInt(entrada.nextLine()));
+                        } catch (NumberFormatException e) {
+                            System.out.println("Introduzca un número válido para la capacidad máxima");
+                            break;
+                        }
+                        System.out.println("En qué zona está la mesa?? (1. Terraza, 2. Salón Principal, 3. Zona Privada)");
+                        try {
+                            opc = Integer.parseInt(entrada.nextLine());
+                            switch (opc) {
+                                case 1:
+                                    mesa.setUbicacion("Terraza");
+                                    System.out.println("Zona: Terraza seleccionada");
+                                    break;
+                                case 2:
+                                    mesa.setUbicacion("Salon principal");
+                                    System.out.println("Zona: Salón Principal seleccionada");
+                                    break;
+                                case 3:
+                                    mesa.setUbicacion("Zona Privada");
+                                    System.out.println("Zona: Zona Privada seleccionada");
+                                    break;
+                                default:
+                                    System.out.println("Elija una opción válida");
+                            }
+                        } catch (NumberFormatException e) {
+                            System.out.println("Elija un número válido");
+                        }
+                        opc = 0;
+                        do {
+                            System.out.println("Elija el estado de la mesa:");
+                            System.out.println("1. Libre");
+                            System.out.println("2. Reservada");
+                            System.out.println("3. Ocupada");
+                            try {
+                                opc = Integer.parseInt(entrada.nextLine());
+                            } catch (NumberFormatException e) {
+                                System.out.println("Elija un número válido");
+                            }
+                            switch (opc) {
+                                case 1:
+                                    mesa.setUbicacion("Libre");
+                                    break;
+                                case 2:
+                                    mesa.setUbicacion("Reservada");
+                                    break;
+                                case 3:
+                                    mesa.setUbicacion("Ocupada");
+                                    break;
+                                default:
+                                    System.out.println("Opción inválida");
+                            }
+                        } while (opc != 1 && opc != 2 && opc != 3);
+                        boolean modificarOk = m.modificarMesa(mesa);
+                        if (modificarOk) {
+                            System.out.println("Se ha modificado la mesa correctamente");
+                            System.out.println(mesa.toString());
+                        } else {
+                            System.out.println("Error al modificar la mesa");
+                        }
+
+                    } else {
+                        System.out.println("No se ha encontrado la mesa");
+                    }
+                    break;
+                case 3:
+                    System.out.println("Introduce el ID de la mesa a eliminar");
+                    try {
+                        idABuscar = Integer.parseInt(entrada.nextLine());
+                    } catch (NumberFormatException e) {
+                        System.out.println("El ID tiene que ser un número entero");
+                        break;
+                    }
+                    mesa = m.buscarMesaPorId(idABuscar);
+                    if (mesa != null) {
+                        System.out.println("Mesa encontrada");
+                        System.out.println(mesa.toString());
+                        boolean eliminarOk = m.eliminarMesa(idABuscar);
+                        if (eliminarOk) {
+                            System.out.println("Mesa eliminada correctamente");
+                        } else {
+                            System.out.println("Error al eliminar la mesa");
+                        }
+                    } else {
+                        System.out.println("Mesa no encontrada");
+                    }
+                    break;
+                case 4:
+                    System.out.println("Introduce el ID de la mesa a eliminar");
+                    try {
+                        idABuscar = Integer.parseInt(entrada.nextLine());
+                    } catch (NumberFormatException e) {
+                        System.out.println("El ID tiene que ser un número entero");
+                        break;
+                    }
+                    mesa = m.buscarMesaPorId(idABuscar);
+                    if (mesa != null) {
+                        System.out.println("Mesa encontrada");
+                        System.out.println(mesa.toString());
+                    } else {
+                        System.out.println("Mesa no encontrada");
+                    }
+                    break;
+                case 5:
+                    System.out.println("Introduzca el ID de la mesa a la que quiere cambiar el estado");
+                    try {
+                        idABuscar = Integer.parseInt(entrada.nextLine());
+                    } catch (NumberFormatException e) {
+                        System.out.println("El ID tiene que ser un número entero");
+                        break;
+                    }
+                    mesa = m.buscarMesaPorId(idABuscar);
+                    if (mesa != null) {
+                        System.out.println("Mesa encontrada");
+                        System.out.println(mesa.toString());
+                        do {
+                            System.out.println("Elija el estado de la mesa:");
+                            System.out.println("1. Libre");
+                            System.out.println("2. Reservada");
+                            System.out.println("3. Ocupada");
+                            try {
+                                opc = Integer.parseInt(entrada.nextLine());
+                            } catch (NumberFormatException e) {
+                                System.out.println("Elija un número válido");
+                            }
+                            switch (opc) {
+                                case 1:
+                                    estado = "Libre";
+                                    break;
+                                case 2:
+                                    estado = "Reservada";
+                                    break;
+                                case 3:
+                                    estado = "Ocupada";
+                                    break;
+                                default:
+                                    System.out.println("Opción inválida");
+                            }
+                        } while (opc != 1 && opc != 2 && opc != 3);
+                        boolean actualizarOk=m.actualizarEstado(opc, estado);
+                        if(actualizarOk) System.out.println("El estado de la mesa se cambió a "+mesa.getEstado());
+                        else System.out.println("Error al modificar el estado");
+                    } else System.out.println("No se encontró la mesa");
+                    break;
+                case 6:
+                    System.out.println("De qué zona quieres cosultar la ocupación??");
+                    try {
+                            opc = Integer.parseInt(entrada.nextLine());
+                            switch (opc) {
+                                case 1:
+                                    zona="Terraza";
+                                    System.out.println("Zona: Terraza seleccionada");
+                                    break;
+                                case 2:
+                                    zona="Salón Principal";
+                                    System.out.println("Zona: Salón Principal seleccionada");
+                                    break;
+                                case 3:
+                                    zona="Zona Privada";
+                                    System.out.println("Zona: Zona Privada seleccionada");
+                                    break;
+                                default:
+                                    System.out.println("Elija una opción válida");
+                            }
+                        } catch (NumberFormatException e) {
+                            System.out.println("Elija un número válido");
+                        }
+                    System.out.println("El porcentaje de ocupación en "+zona+" es: "+m.ocupacionPorUbicacion(zona));
+                    break;
+                case 7:
+                    System.out.println("Lista de mesas:");
+                    System.out.println(m.listarMesas());
+                    break;
+                case 8:
+                    System.out.println("Saliendo...");
+                    break;
+                default:
+                    throw new AssertionError();
+            }
+        } while (opc != 8);
     }
 }

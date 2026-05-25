@@ -16,21 +16,42 @@ public class ReservaDAO {
         this.conexion = conexion;
     }
 
-    public boolean insertarReserva(ReservaDTO r){
-        String sql="INSERT INTO RESERVA (FECHA, DNI_CLIENTE, ID_MESA, ID_EMPLEADO, IMPORTE_TOTAL) VALUES (?, ?, ?, ?, ?)";
-        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
-            ps.setTimestamp(1, java.sql.Timestamp.valueOf(r.getFecha()));
-            ps.setString(2, r.getDniCliente());
-            ps.setInt(3, r.getIdMesa());
-            ps.setInt(4, r.getIdEmpleado());
-            ps.setDouble(5, r.getImporteTotal());
-            int insercion=ps.executeUpdate();
-            return insercion>0;
-        } catch (SQLException e) {
-            System.out.println("Error al insertar la reserva: "+e.getMessage());
+    public boolean registrarReservaAutomatica(ReservaDTO reserva, String zona, int numComensales) {
+    String sqlBuscarMesa = "SELECT id FROM mesa WHERE ubicacion = ? AND capacidad_maxima >= ? AND estado = 'Libre' LIMIT 1";
+    String sqlInsertar = "INSERT INTO reserva (dni_cliente, id_mesa, id_empleado, fecha, comensales) "
+                       + "VALUES (?, ?, (SELECT id FROM empleado ORDER BY RAND() LIMIT 1), ?, ?)";
+    String sqlActualizarMesa = "UPDATE mesa SET estado = 'Reservada' WHERE id = ?";
+    try (PreparedStatement psBuscar = conexion.prepareStatement(sqlBuscarMesa)) {
+        psBuscar.setString(1, zona);
+        psBuscar.setInt(2, numComensales);
+        ResultSet rs = psBuscar.executeQuery();
+        
+        if (rs.next()) {
+            int idMesaEncontrada = rs.getInt("id");
+            try (PreparedStatement psInsertar = conexion.prepareStatement(sqlInsertar)) {
+                psInsertar.setString(1, reserva.getDniCliente());
+                psInsertar.setInt(2, idMesaEncontrada);
+                psInsertar.setTimestamp(3, java.sql.Timestamp.valueOf(reserva.getFecha()));
+                psInsertar.setInt(4, numComensales);
+                
+                psInsertar.executeUpdate();
+            }
+            try (PreparedStatement psActualizar = conexion.prepareStatement(sqlActualizarMesa)) {
+                psActualizar.setInt(1, idMesaEncontrada);
+                psActualizar.executeUpdate();
+            }
+            
+            return true;
+        } else {
+            System.out.println("No hay mesas libres en esa zona con esa capacidad.");
             return false;
         }
+
+    } catch (SQLException e) {
+        System.out.println("Error en el proceso de reserva: " + e.getMessage());
+        return false;
     }
+}
 
     public Map<String, Double> obtenerFacturacionDiariaPorTurno() {
         Map<String, Double> mapaFacturacion = new HashMap<>();
