@@ -20,13 +20,14 @@ public class AdminController {
         int intentos=3;
         String usu;
         String pasw;
+        int opcion=0;
         do{
+        if(intentos==0)System.out.println("Demasiados intentos");
         System.out.println("Introduce el usuario");
         usu=entrada.nextLine();
         System.out.println("Introduce la contraseña");
         pasw=entrada.nextLine();
         if(usu.equals(usr) && pasw.equals(pass)){
-            int opcion=0;
             do {
                 System.out.println("1. Gestión de platos");
                 System.out.println("2. Gestión de empleados");
@@ -48,6 +49,13 @@ public class AdminController {
                             ClienteController clientectrl= new ClienteController();
                             clientectrl.mostrarMenuAdmin();
                             break;
+                        case 4:
+                            ReservaController reservactrl= new ReservaController();
+                            reservactrl.mostrarMenu();
+                            break;
+                        case 7:
+                            System.out.println("Saliendo...");
+                            break;
                         default:
                             throw new AssertionError();
                     }
@@ -61,8 +69,8 @@ public class AdminController {
             intentos--;
         }
         
-    } while(intentos!=0);
-    System.out.println("Demasiados intentos");
+    } while(intentos >=0 && opcion!=7);
+    
     }
     /*
     Para hacer:
