@@ -1,9 +1,11 @@
 package controller;
 
+import dao.CategoriaDAO;
 import dao.EmpleadoDAO;
 import dao.MesaDAO;
 import dao.PlatoDAO;
 import db.Conexion;
+import dto.CategoriaDTO;
 import dto.EmpleadoDTO;
 import dto.MesaDTO;
 import dto.PlatoDTO;
@@ -12,6 +14,7 @@ import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
+import util.DatosInvalidosException;
 
 public class AdminController {
 
@@ -577,8 +580,60 @@ public class AdminController {
                     System.out.println("Saliendo...");
                     break;
                 default:
-                    throw new AssertionError();
+                    System.out.println("Elija una opción válida");
+                    break;
             }
         } while (opc != 8);
+    }
+
+    public void menuCategorias() throws DatosInvalidosException{
+        CategoriaDAO c= new CategoriaDAO(conexion);
+        CategoriaDTO categoria= new CategoriaDTO();
+        int opc=0;
+        int idABuscar;
+        do { 
+            System.out.println("Gestión de categorías");
+            System.out.println("1. Insertar categoría");
+            System.out.println("2. Listar categorías");
+            System.out.println("3. Buscar por ID");
+            System.out.println("4. Salir");
+            try {
+                opc=Integer.parseInt(entrada.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.println("Inserte un número válido");
+            }
+            switch (opc) {
+                case 1:
+                    System.out.println("Introduce el nombre de la categoría");
+                    categoria.setNombre(entrada.nextLine());
+                    if(categoria.validarDatos()){
+                        boolean insertarOk= c.insertar(categoria);
+                        if(insertarOk){
+                            System.out.println("Categoría insertada correctamente");
+                            System.out.println(categoria.toString());
+                        } else System.out.println("Error al insertar la categoría");
+                    } else throw new DatosInvalidosException("Los datos insertados no son válidos");
+                    break;
+                case 2:
+                    System.out.println("Lista de categorías:");
+                    System.out.println(c.listarCategorias());
+                    break;
+                case 3:
+                    System.out.println("Inserte el id de la categoría a buscar");
+                    try {
+                        idABuscar=Integer.parseInt(entrada.nextLine());
+                    } catch (NumberFormatException e) {
+                        System.out.println("El ID tiene que ser un número entero");
+                        break;
+                    }
+                    categoria=c.buscarPorId(idABuscar);
+                    if(categoria!=null){
+                        System.out.println("Categoría encontrada:");
+                        System.out.println(categoria.toString());
+                    } else System.out.println("No se ha encontrado la categoría con id "+idABuscar);
+                default:
+                    throw new AssertionError();
+            }
+        } while (opc!=4);
     }
 }
