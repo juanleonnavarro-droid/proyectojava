@@ -2,6 +2,7 @@ package controller;
 
 import java.sql.Connection;
 import java.util.Scanner;
+import util.DatosInvalidosException;
 
 public class MainController {
     private Connection conexion;
@@ -11,7 +12,7 @@ public class MainController {
         entrada=new Scanner(System.in);
     }
 
-    public void arrancarAplicacion(){
+    public void arrancarAplicacion() throws DatosInvalidosException{
         int opcion=0;
         do {
             System.out.println("Bienvenido a Sabores Gourmet");

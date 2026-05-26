@@ -29,7 +29,7 @@ public class AdminController {
         entrada = new Scanner(System.in);
     }
 
-    public void mostrarMenu() {
+    public void mostrarMenu() throws DatosInvalidosException {
         int intentos = 3;
         String usu;
         String pasw;
@@ -69,6 +69,10 @@ public class AdminController {
                                 reservactrl.mostrarMenu();
                                 break;
                             case 5:
+                                menuMesas();
+                                break;
+                            case 6:
+                                menuCategorias();
                                 break;
                             case 7:
                                 System.out.println("Saliendo...");
@@ -99,11 +103,11 @@ public class AdminController {
     subcontrolador de mesas
     subcontrolador de categorias
      */
-    public void menuPlatos() {
+    public void menuPlatos() throws DatosInvalidosException {
         int opc = 0;
         PlatoDTO plato = new PlatoDTO();
         PlatoDAO p = new PlatoDAO(conexion);
-        int idABuscar;
+        int idABuscar=0;
         do {
             System.out.println("Gestión de platos:");
             System.out.println("1. Insertar plato");
@@ -137,12 +141,17 @@ public class AdminController {
                             System.out.println("Error al insertar el plato");
                         }
                     } else {
-                        System.out.println("Los datos introducidos no son válidos");
+                        throw new DatosInvalidosException("Los datos introducidos no son válidos");
                     }
                     break;
                 case 2:
                     System.out.println("Inserta el ID del plato a modificar:");
-                    idABuscar = Integer.parseInt(entrada.nextLine());
+                    try {
+                        idABuscar = Integer.parseInt(entrada.nextLine());
+                    } catch (NumberFormatException e) {
+                        System.out.println("El ID tiene que ser un número entero");
+                        break;
+                    }
                     plato = p.buscarPorId(idABuscar);
                     if (plato != null) {
                         System.out.println("Plato encontrado");
@@ -153,20 +162,29 @@ public class AdminController {
                         plato.setDescripcion(entrada.nextLine());
                         System.out.println("Introduzca el precio modificado");
                         plato.setPrecio(Double.parseDouble(entrada.nextLine()));
-                        boolean modificarOk = p.modificarPlato(plato);
-                        if (modificarOk) {
-                            System.out.println("Se ha modificado el plato correctamente");
-                            System.out.println(plato.toString());
+                        if (plato.validarDatos()) {
+                            boolean modificarOk = p.modificarPlato(plato);
+                            if (modificarOk) {
+                                System.out.println("Se ha modificado el plato correctamente");
+                                System.out.println(plato.toString());
+                            } else {
+                                System.out.println("Error al modificar el plato");
+                            }
                         } else {
-                            System.out.println("Error al modificar el plato");
+                            throw new DatosInvalidosException("Los datos introducidos no son válidos");
                         }
+
                     } else {
-                        System.out.println("Los datos introducidos no son válidos");
+                        System.out.println("No se ha encontrado el plato con ID " + idABuscar);
                     }
                     break;
                 case 3:
                     System.out.println("Introduce el ID del plato que quiere eliminar");
-                    idABuscar = Integer.parseInt(entrada.nextLine());
+                    try {
+                        idABuscar = Integer.parseInt(entrada.nextLine());    
+                    } catch (NumberFormatException e) {
+                        System.out.println("El ID del plato tiene que ser un número entero");
+                    }
                     plato = p.buscarPorId(idABuscar);
                     if (plato != null) {
                         System.out.println("Plato encontrado, eliminando plato...");
@@ -181,7 +199,12 @@ public class AdminController {
                     break;
                 case 5:
                     System.out.println("Introduzca el ID del plato a buscar:");
-                    idABuscar = Integer.parseInt(entrada.nextLine());
+                    try {
+                        idABuscar = Integer.parseInt(entrada.nextLine());
+                    } catch (NumberFormatException e) {
+                        System.out.println("El ID del plato tiene que ser un número entero");
+                    }
+                    
                     plato = p.buscarPorId(idABuscar);
                     if (plato != null) {
                         System.out.println("Plato encontrado:");
@@ -207,7 +230,7 @@ public class AdminController {
         } while (opc != 8);
     }
 
-    public void menuEmpleados() {
+    public void menuEmpleados() throws DatosInvalidosException{
         LocalDate inicio = null;
         LocalDate fin = null;
         DateTimeFormatter formateador = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -242,9 +265,7 @@ public class AdminController {
                         } else {
                             System.out.println("Error al insertar el empleado");
                         }
-                    } else {
-                        System.out.println("Los datos introducidos no son válidos");
-                    }
+                    } else throw new DatosInvalidosException("Los datos introducidos no son válidos");
                     break;
                 case 2:
                     System.out.println("Inserte el ID del plato que quiere modificar");
@@ -269,9 +290,7 @@ public class AdminController {
                             } else {
                                 System.out.println("Error al modificar al empleado");
                             }
-                        } else {
-                            System.out.println("Los datos introducidos son incorrectos");
-                        }
+                        } else throw new DatosInvalidosException("Los datos introducidos no son válidos");
                     }
                     break;
                 case 4:
@@ -324,9 +343,9 @@ public class AdminController {
 
     }
 
-    public void menuMesas() {
-        String zona="";
-        String estado="";
+    public void menuMesas() throws DatosInvalidosException{
+        String zona = "";
+        String estado = "";
         int opc = 0;
         MesaDTO mesa = new MesaDTO();
         MesaDAO m = new MesaDAO(conexion);
@@ -386,9 +405,7 @@ public class AdminController {
                         } else {
                             System.out.println("Error al insertar la mesa");
                         }
-                    } else {
-                        System.out.println("Los datos introducidos no son válidos");
-                    }
+                    } else throw new DatosInvalidosException("Los datos introducidos no son válidos");
                     break;
                 case 2:
                     System.out.println("Inserte el ID de la mesa a modificar");
@@ -542,35 +559,40 @@ public class AdminController {
                                     System.out.println("Opción inválida");
                             }
                         } while (opc != 1 && opc != 2 && opc != 3);
-                        boolean actualizarOk=m.actualizarEstado(opc, estado);
-                        if(actualizarOk) System.out.println("El estado de la mesa se cambió a "+mesa.getEstado());
-                        else System.out.println("Error al modificar el estado");
-                    } else System.out.println("No se encontró la mesa");
+                        boolean actualizarOk = m.actualizarEstado(opc, estado);
+                        if (actualizarOk) {
+                            System.out.println("El estado de la mesa se cambió a " + mesa.getEstado()); 
+                        }else {
+                            System.out.println("Error al modificar el estado");
+                        }
+                    } else {
+                        System.out.println("No se encontró la mesa");
+                    }
                     break;
                 case 6:
                     System.out.println("De qué zona quieres cosultar la ocupación??");
                     try {
-                            opc = Integer.parseInt(entrada.nextLine());
-                            switch (opc) {
-                                case 1:
-                                    zona="Terraza";
-                                    System.out.println("Zona: Terraza seleccionada");
-                                    break;
-                                case 2:
-                                    zona="Salón Principal";
-                                    System.out.println("Zona: Salón Principal seleccionada");
-                                    break;
-                                case 3:
-                                    zona="Zona Privada";
-                                    System.out.println("Zona: Zona Privada seleccionada");
-                                    break;
-                                default:
-                                    System.out.println("Elija una opción válida");
-                            }
-                        } catch (NumberFormatException e) {
-                            System.out.println("Elija un número válido");
+                        opc = Integer.parseInt(entrada.nextLine());
+                        switch (opc) {
+                            case 1:
+                                zona = "Terraza";
+                                System.out.println("Zona: Terraza seleccionada");
+                                break;
+                            case 2:
+                                zona = "Salón Principal";
+                                System.out.println("Zona: Salón Principal seleccionada");
+                                break;
+                            case 3:
+                                zona = "Zona Privada";
+                                System.out.println("Zona: Zona Privada seleccionada");
+                                break;
+                            default:
+                                System.out.println("Elija una opción válida");
                         }
-                    System.out.println("El porcentaje de ocupación en "+zona+" es: "+m.ocupacionPorUbicacion(zona));
+                    } catch (NumberFormatException e) {
+                        System.out.println("Elija un número válido");
+                    }
+                    System.out.println("El porcentaje de ocupación en " + zona + " es: " + m.ocupacionPorUbicacion(zona));
                     break;
                 case 7:
                     System.out.println("Lista de mesas:");
@@ -586,19 +608,19 @@ public class AdminController {
         } while (opc != 8);
     }
 
-    public void menuCategorias() throws DatosInvalidosException{
-        CategoriaDAO c= new CategoriaDAO(conexion);
-        CategoriaDTO categoria= new CategoriaDTO();
-        int opc=0;
+    public void menuCategorias() throws DatosInvalidosException {
+        CategoriaDAO c = new CategoriaDAO(conexion);
+        CategoriaDTO categoria = new CategoriaDTO();
+        int opc = 0;
         int idABuscar;
-        do { 
+        do {
             System.out.println("Gestión de categorías");
             System.out.println("1. Insertar categoría");
             System.out.println("2. Listar categorías");
             System.out.println("3. Buscar por ID");
             System.out.println("4. Salir");
             try {
-                opc=Integer.parseInt(entrada.nextLine());
+                opc = Integer.parseInt(entrada.nextLine());
             } catch (NumberFormatException e) {
                 System.out.println("Inserte un número válido");
             }
@@ -606,13 +628,17 @@ public class AdminController {
                 case 1:
                     System.out.println("Introduce el nombre de la categoría");
                     categoria.setNombre(entrada.nextLine());
-                    if(categoria.validarDatos()){
-                        boolean insertarOk= c.insertar(categoria);
-                        if(insertarOk){
+                    if (categoria.validarDatos()) {
+                        boolean insertarOk = c.insertar(categoria);
+                        if (insertarOk) {
                             System.out.println("Categoría insertada correctamente");
                             System.out.println(categoria.toString());
-                        } else System.out.println("Error al insertar la categoría");
-                    } else throw new DatosInvalidosException("Los datos insertados no son válidos");
+                        } else {
+                            System.out.println("Error al insertar la categoría");
+                        }
+                    } else {
+                        throw new DatosInvalidosException("Los datos insertados no son válidos");
+                    }
                     break;
                 case 2:
                     System.out.println("Lista de categorías:");
@@ -621,19 +647,21 @@ public class AdminController {
                 case 3:
                     System.out.println("Inserte el id de la categoría a buscar");
                     try {
-                        idABuscar=Integer.parseInt(entrada.nextLine());
+                        idABuscar = Integer.parseInt(entrada.nextLine());
                     } catch (NumberFormatException e) {
                         System.out.println("El ID tiene que ser un número entero");
                         break;
                     }
-                    categoria=c.buscarPorId(idABuscar);
-                    if(categoria!=null){
+                    categoria = c.buscarPorId(idABuscar);
+                    if (categoria != null) {
                         System.out.println("Categoría encontrada:");
                         System.out.println(categoria.toString());
-                    } else System.out.println("No se ha encontrado la categoría con id "+idABuscar);
+                    } else {
+                        System.out.println("No se ha encontrado la categoría con id " + idABuscar);
+                    }
                 default:
                     throw new AssertionError();
             }
-        } while (opc!=4);
+        } while (opc != 4);
     }
 }

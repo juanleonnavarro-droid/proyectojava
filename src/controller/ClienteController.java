@@ -7,6 +7,7 @@ import dto.HistorialDTO;
 import java.sql.Connection;
 import java.util.List;
 import java.util.Scanner;
+import util.DatosInvalidosException;
 
 /*
 Para hacer:
@@ -22,7 +23,7 @@ public class ClienteController {
         this.entrada = new Scanner(System.in);
     }
 
-    public void mostrarMenu(){
+    public void mostrarMenu() throws DatosInvalidosException{
         ClienteDTO clienteEncontrado;
         String dniAEncontrar;
         ClienteDAO c= new ClienteDAO(conexion);
@@ -57,9 +58,7 @@ public class ClienteController {
                             } else{
                                 System.out.println("Error al insertar el cliente");
                             }
-                        } else{
-                            System.out.println("Los datos introducidos no son válidos");
-                        }
+                        } else throw new DatosInvalidosException("Los datos introducidos no son válidos");
                         break;
                         case 2:
                             System.out.println("Introduce tu DNI para ver su historial:");
@@ -92,7 +91,7 @@ public class ClienteController {
 
     }
 
-    public void mostrarMenuAdmin(){
+    public void mostrarMenuAdmin() throws DatosInvalidosException{
         ClienteDTO clienteEncontrado;
         String dniAEncontrar;
         ClienteDAO c= new ClienteDAO(conexion);
@@ -129,9 +128,7 @@ public class ClienteController {
                             } else{
                                 System.out.println("Error al insertar el cliente");
                             }
-                        } else{
-                            System.out.println("Los datos introducidos no son válidos");
-                        }
+                        } else throw new DatosInvalidosException("Los datos introducidos no son válidos");
                         break;
                     case 2:
                         System.out.println("Escriba el DNI del cliente que quiere buscar:");
@@ -167,9 +164,7 @@ public class ClienteController {
                                 } else{
                                     System.out.println("Error al modificar el cliente");
                                 }
-                            } else{
-                                System.out.println("Los datos introducidos no son válidos");
-                            }
+                            } else throw new DatosInvalidosException("Los datos introducidos no son válidos");
                         } else{
                             System.out.println("No existe ningún cliente con el DNI "+dniAEncontrar);
                         }
