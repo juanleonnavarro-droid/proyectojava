@@ -99,7 +99,7 @@ public class ReservaDTO implements Verificable{
 
     @Override
     public boolean validarDatos() {
-        if(this.fecha.isAfter(LocalDateTime.now())) return false;
+        if(this.fecha.isBefore(LocalDateTime.now())) return false;
         if(this.importeTotal<0) return false;
         if(this.dniCliente==null) return false;
         return true;

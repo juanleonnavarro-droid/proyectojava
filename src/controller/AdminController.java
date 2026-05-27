@@ -66,7 +66,7 @@ public class AdminController {
                                 break;
                             case 4:
                                 ReservaController reservactrl = new ReservaController();
-                                reservactrl.mostrarMenu();
+                                reservactrl.mostrarMenuAdmin();
                                 break;
                             case 5:
                                 menuMesas();
@@ -108,6 +108,7 @@ public class AdminController {
         PlatoDTO plato = new PlatoDTO();
         PlatoDAO p = new PlatoDAO(conexion);
         int idABuscar=0;
+        CategoriaDAO c= new CategoriaDAO(conexion);
         do {
             System.out.println("Gestión de platos:");
             System.out.println("1. Insertar plato");
@@ -132,6 +133,9 @@ public class AdminController {
                     plato.setDescripcion(entrada.nextLine());
                     System.out.println("Inserte el precio del plato");
                     plato.setPrecio(Double.parseDouble(entrada.nextLine()));
+                    System.out.println("Introduzca la ID de la categoría a la que pertenece");
+                    System.out.println(c.listarCategorias());
+                    plato.setIdCategoria(Integer.parseInt(entrada.nextLine()));
                     if (plato.validarDatos()) {
                         boolean insertadoOk = p.insertarPlato(plato);
                         if (insertadoOk) {
@@ -195,7 +199,7 @@ public class AdminController {
                     break;
                 case 4:
                     System.out.println("Lista de platos:");
-                    p.listarPlatos();
+                    System.out.println(p.listarPlatos());
                     break;
                 case 5:
                     System.out.println("Introduzca el ID del plato a buscar:");
@@ -379,24 +383,27 @@ public class AdminController {
                         opc = Integer.parseInt(entrada.nextLine());
                         switch (opc) {
                             case 1:
-                                mesa.setUbicacion("Terraza");
                                 System.out.println("Zona: Terraza seleccionada");
+                                zona="Terraza";
                                 break;
                             case 2:
-                                mesa.setUbicacion("Salon principal");
                                 System.out.println("Zona: Salón Principal seleccionada");
+                                zona="Salón Principal";
                                 break;
                             case 3:
-                                mesa.setUbicacion("Zona Privada");
                                 System.out.println("Zona: Zona Privada seleccionada");
+                                zona="Zona privada";
                                 break;
                             default:
                                 System.out.println("Elija una opción válida");
+                                break;
                         }
                     } catch (NumberFormatException e) {
                         System.out.println("Elija un número válido");
                     }
+                    mesa.setUbicacion(zona);
                     mesa.setEstado("Libre");
+                    System.out.println(mesa.toString());
                     if (mesa.validarDatos()) {
                         boolean insertarOk = m.insertarMesa(mesa);
                         if (insertarOk) {
@@ -659,8 +666,11 @@ public class AdminController {
                     } else {
                         System.out.println("No se ha encontrado la categoría con id " + idABuscar);
                     }
+                case 4:
+                    System.out.println("Saliendo...");
+                    break;
                 default:
-                    throw new AssertionError();
+                    System.out.println("Elija una opción válida");
             }
         } while (opc != 4);
     }

@@ -74,8 +74,8 @@ public class MesaDTO implements Verificable{
     public boolean validarDatos() {
         if(this.capacidadMaxima<=0) return false;
         if(!this.estado.toLowerCase().equals("libre")
-            || !this.estado.toLowerCase().equals("ocupada")
-            || !this.estado.toLowerCase().equals("reservada")    
+            && !this.estado.toLowerCase().equals("ocupada")
+            && !this.estado.toLowerCase().equals("reservada")    
         ) return false;
         return true;
     }

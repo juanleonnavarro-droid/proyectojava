@@ -105,7 +105,7 @@ public class PlatoDAO {
     }
 
     public boolean eliminarPlato(PlatoDTO p){
-        String sql="DELETE FROM MESA WHERE ID=?";
+        String sql="DELETE FROM PLATO WHERE ID=?";
         try (PreparedStatement ps = conexion.prepareStatement(sql)) {
             ps.setInt(1, p.getId());
             int eliminar=ps.executeUpdate();

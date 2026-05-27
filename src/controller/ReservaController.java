@@ -10,6 +10,7 @@ import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
+import util.DatosInvalidosException;
 
 public class ReservaController {
 
@@ -17,6 +18,7 @@ public class ReservaController {
     private Connection conexion;
     private Scanner entrada;
     private String zona;
+    DateTimeFormatter formateador = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     public ReservaController() {
         conexion = con.abrirConexion();
@@ -25,7 +27,7 @@ public class ReservaController {
 
     public void mostrarMenu() {
         LocalDateTime fechaHoraReserva = null;
-        DateTimeFormatter formateador = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
         int opcion = 0;
         int numComensales = 1;
         ClienteDAO clientedao = new ClienteDAO(conexion);
@@ -75,16 +77,113 @@ public class ReservaController {
                 }
             } while (fechaHoraReserva == null);
             ReservaDTO reserva = new ReservaDTO();
-            ReservaDAO r= new ReservaDAO(conexion);
+            ReservaDAO r = new ReservaDAO(conexion);
             reserva.setDniCliente(cliente.getDni());
             reserva.setFecha(fechaHoraReserva);
             reserva.setComensales(numComensales);
-            if(r.registrarReservaAutomatica(reserva, zona, numComensales)) System.out.println("Reserva creada con éxito");
-            else System.out.println("La reserva no se creó correctamente");
-        } else{
+            if (r.registrarReservaAutomatica(reserva, zona, numComensales)) {
+                System.out.println("Reserva creada con éxito");
+            } else {
+                System.out.println("La reserva no se creó correctamente");
+            }
+        } else {
             System.out.println("Cliente no registrado, regístrese antes de hacer una reserva");
         }
     }
 
-    
+    public void mostrarMenuAdmin() throws DatosInvalidosException{
+        ReservaDTO reserva = new ReservaDTO();
+        int idABuscar = 0;
+        ReservaDAO r = new ReservaDAO(conexion);
+        int opc = 0;
+        do {
+            System.out.println("Gestión de reservas:");
+            System.out.println("1. Obtener facturación diaria por turno");
+            System.out.println("2. Modificar reserva");
+            System.out.println("3. Verificar mesas excedidas de tiempo");
+            System.out.println("4. Cancelar reserva");
+            System.out.println("5. Buscar reserva por ID");
+            System.out.println("6. Salir");
+            try {
+                opc = Integer.parseInt(entrada.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.println("Introduce un número válido");
+            }
+            switch (opc) {
+                case 1:
+                    System.out.println("Facturación diaria por turno");
+                    System.out.println(r.obtenerFacturacionDiariaPorTurno());
+                    break;
+                case 2:
+                    System.out.println("Inserte el ID de la reserva a modificar");
+                    try {
+                        idABuscar = Integer.parseInt(entrada.nextLine());
+                    } catch (NumberFormatException e) {
+                        System.out.println("El ID tiene que ser un número");
+                    }
+                    reserva = r.buscarPorID(idABuscar);
+                    if (reserva != null) {
+                        System.out.println("Reserva encontrada");
+                        System.out.println(reserva.toString());
+                        System.out.println("Introduce la fecha modificada (DD/MM/YYYY HH:MM)");
+                        reserva.setFecha(LocalDateTime.parse(entrada.nextLine(), formateador));
+                        System.out.println("Introduce el nueva ID de la mesa");
+                        reserva.setIdMesa(Integer.parseInt(entrada.nextLine()));
+                        System.out.println("Introduce el nuevo ID de empleado");
+                        reserva.setIdEmpleado(Integer.parseInt(entrada.nextLine()));
+                        if (reserva.validarDatos()) {
+                            boolean modificarOk = r.modificarReserva(reserva);
+                            if (modificarOk) {
+                                System.out.println("Reserva modificada correctamente");
+                                System.out.println(reserva.toString());
+                            } else System.out.println("Error al modificar la reserva");
+                        } else throw new DatosInvalidosException("Los datos introducidos son inválidos");
+                    }
+                    break;
+                case 3:
+                    System.out.println("Mesas excedidas de tiempo");
+                    r.verificarMesasExcedidasTiempo();
+                    break;
+                case 4:
+                    System.out.println("Introduce el ID de la reserva a cancelar");
+                    try {
+                        idABuscar=Integer.parseInt(entrada.nextLine());
+                    } catch (NumberFormatException e) {
+                        System.out.println("El ID tiene que ser un número entero");
+                        break;
+                    }
+                    reserva=r.buscarPorID(idABuscar);
+                    if(reserva!=null){
+                        System.out.println("Reserva encontrada");
+                        System.out.println(reserva.toString());
+                        boolean eliminarOk=r.cancelarReserva(idABuscar);
+                        if(eliminarOk){
+                            System.out.println("Reserva cancelada correctamente");
+                        } else System.out.println("Error al cancelar la reserva");
+                    } else System.out.println("No se ha encontrado la reserva con la ID "+idABuscar);
+                    break;
+                case 5:
+                    System.out.println("Introduce el ID de la reserva a cancelar");
+                    try {
+                        idABuscar=Integer.parseInt(entrada.nextLine());
+                    } catch (NumberFormatException e) {
+                        System.out.println("El ID tiene que ser un número entero");
+                        break;
+                    }
+                    reserva=r.buscarPorID(idABuscar);
+                    if(reserva!=null){
+                        System.out.println("Reserva encontrada");
+                        System.out.println(reserva.toString());
+                    } else System.out.println("No se ha encontrado la reserva con la ID "+idABuscar);
+                    break;
+                case 6:
+                    System.out.println("Saliendo...");
+                    break;
+                default:
+                    System.out.println("Introduce una opción válida");
+                    break;
+            }
+        } while (opc != 6);
+
+    }
 }

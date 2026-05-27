@@ -47,7 +47,7 @@ public class CategoriaDAO {
     }
 
     public CategoriaDTO buscarPorId(int id){
-        String sql ="SELECT NOMBRE FROM CATEGORIA WHERE ID_CATEGORIA = ?";
+        String sql ="SELECT ID, NOMBRE FROM CATEGORIA WHERE ID = ?";
 
         try (PreparedStatement ps= conexion.prepareStatement(sql)){
             ps.setInt(1, id);
