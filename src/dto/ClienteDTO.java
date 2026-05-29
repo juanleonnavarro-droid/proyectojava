@@ -62,6 +62,15 @@ public class ClienteDTO extends Persona implements Verificable  {
     if(!getEmail().contains("@")){
         return false;
     }
+    if(getEmail().isEmpty() || getEmail()==null){
+        return false;
+    }
+    if(getNombre().isEmpty() || getNombre()==null){
+        return false;
+    }
+    if(getTelefono().isEmpty() || getTelefono()==null){
+        return false;
+    }
     return true;
     }
     

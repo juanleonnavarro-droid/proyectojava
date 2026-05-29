@@ -7,6 +7,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
@@ -40,6 +41,7 @@ public class EmpleadoDAO {
             ps.setString(2, em.getCargo());
             ps.setString(3, em.getTurno_trabajo());
             ps.setInt(4, em.getAnos_expe());
+            ps.setInt(5, em.getId());
             int modifi=ps.executeUpdate();
             return modifi>0;
         } catch (SQLException e) {
@@ -52,9 +54,11 @@ public class EmpleadoDAO {
     public EmpleadoDTO buscarPorId(int id){
         String sql="SELECT * FROM EMPLEADO WHERE ID=?";
         try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+            ps.setInt(1, id);
            try (ResultSet rs=ps.executeQuery()) {
             if(rs.next()){
                 EmpleadoDTO empleado= new EmpleadoDTO();
+                empleado.setId(rs.getInt("ID"));
                 empleado.setNombre(rs.getString("NOMBRE"));
                 empleado.setCargo(rs.getString("CARGO"));
                 empleado.setTurno_trabajo(rs.getString("TURNO_TRABAJO"));
@@ -89,14 +93,15 @@ public class EmpleadoDAO {
 
     public double calcularComision(int id, LocalDate inicio, LocalDate fin){
         double comision=0.00;
-        String sql="{call calculo_comision_ventas(?, ?, ?)}";
+        String sql="{? = call calculo_comision_ventas(?, ?, ?)}";
         try (CallableStatement cs = conexion.prepareCall(sql)) {
-            cs.setInt(1, id);
-            cs.setDate(2, Date.valueOf(inicio));
-            cs.setDate(3, Date.valueOf(fin));
+            cs.registerOutParameter(1, Types.DOUBLE);
+            cs.setInt(2, id);
+            cs.setDate(3, Date.valueOf(inicio));
+            cs.setDate(4, Date.valueOf(fin));
             try (ResultSet rs=cs.executeQuery()) {
                 if(rs.next()){
-                    comision=rs.getDouble("resultado");
+                    comision=rs.getDouble(1);
                 }
             }
         } catch (SQLException e) {

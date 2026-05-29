@@ -44,6 +44,7 @@ public class PlatoDAO {
             try (ResultSet rs=ps.executeQuery()) {
                 if(rs.next()){
                     PlatoDTO p = new PlatoDTO();
+                    p.setId(rs.getInt("ID"));
                     p.setIdCategoria(rs.getInt("ID_CATEGORIA"));
                     p.setNombre(rs.getString("NOMBRE"));
                     p.setDescripcion(rs.getString("DESCRIPCION"));
@@ -119,12 +120,12 @@ public class PlatoDAO {
     public boolean modificarPlato(PlatoDTO p){
         String sql="UPDATE PLATO SET ID_CATEGORIA=?, NOMBRE=?, DESCRIPCION=?, PRECIO=?, DISPONIBILIDAD=? WHERE ID=?";
         try (PreparedStatement ps = conexion.prepareStatement(sql)) {
-            ps.setInt(1, p.getId());
-            ps.setInt(2, p.getIdCategoria());
-            ps.setString(3, p.getNombre());
-            ps.setString(4, p.getDescripcion());
-            ps.setDouble(5, p.getPrecio());
-            ps.setBoolean(6, p.isDisponibilidad());
+            ps.setInt(1, p.getIdCategoria());
+            ps.setString(2, p.getNombre());
+            ps.setString(3, p.getDescripcion());
+            ps.setDouble(4, p.getPrecio());
+            ps.setBoolean(5, p.isDisponibilidad());
+            ps.setInt(6, p.getId());
             int modifi=ps.executeUpdate();
             return modifi>0;
         } catch (SQLException e) {

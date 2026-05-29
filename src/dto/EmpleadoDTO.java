@@ -65,10 +65,13 @@ public class EmpleadoDTO extends Persona implements Verificable{
 
     @Override
     public boolean validarDatos() {
+        if(this.nombre.isEmpty() || this.nombre==null){
+            return false;
+        }
         if(this.anos_expe<0){
             return false;
         }
-        if(this.cargo==null) return false;
+        if(this.turno_trabajo.isEmpty() || this.turno_trabajo==null) return false;
         if(!this.cargo.toLowerCase().equals("camarero") 
         && !this.cargo.toLowerCase().equals("cocinero")
         && !this.cargo.toLowerCase().equals("encargado")

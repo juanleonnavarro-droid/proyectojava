@@ -77,6 +77,11 @@ public class MesaDTO implements Verificable{
             && !this.estado.toLowerCase().equals("ocupada")
             && !this.estado.toLowerCase().equals("reservada")    
         ) return false;
+        if(!this.ubicacion.toLowerCase().equals("terraza")
+            && !this.ubicacion.toLowerCase().equals("salón principal")
+            && !this.ubicacion.toLowerCase().equals("zona privada")){
+                return false;
+            }
         return true;
     }
 

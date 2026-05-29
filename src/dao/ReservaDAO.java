@@ -70,13 +70,14 @@ public class ReservaDAO {
     }
 
     public boolean modificarReserva(ReservaDTO r) {
-        String sql = "UPDATE RESERVA SET FECHA = ?, ID_MESA = ?, ID_EMPLEADO = ? WHERE ID = ?";
+        String sql = "UPDATE RESERVA SET FECHA = ?, ID_MESA = ?, ID_EMPLEADO = ?, COMENSALES = ? WHERE ID = ?";
 
         try (PreparedStatement ps = conexion.prepareStatement(sql)) {
             ps.setTimestamp(1, java.sql.Timestamp.valueOf(r.getFecha()));
             ps.setInt(2, r.getIdMesa());
             ps.setInt(3, r.getIdEmpleado());
-            ps.setInt(4, r.getId());
+            ps.setInt(4, r.getComensales());
+            ps.setInt(5, r.getId());
             int filasAfectadas = ps.executeUpdate();
             return filasAfectadas > 0;
         } catch (SQLException e) {
