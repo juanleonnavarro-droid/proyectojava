@@ -73,19 +73,21 @@ public class AdminController {
                                 menuCategorias();
                                 break;
                             case 7:
-                                System.out.println("Mantenimiento");
+                                DetalleReservaController dreservactrl= new DetalleReservaController();
+                                dreservactrl.mostrarMenu();
                                 break;
                             case 8:
                                 System.out.println("Saliendo...");
                                 break;
                             default:
-                                throw new AssertionError();
+                                System.out.println("Elija una opción válida");
+                                break;
                         }
                     } catch (NumberFormatException e) {
                         System.out.println("Introduce un número válido");
                     }
 
-                } while (opcion != 7);
+                } while (opcion != 8);
             } else {
                 System.out.println("Contraseña o usuario incorrectos, vuelva a intentarlo (intentos restantes): " + intentos);
                 intentos--;
@@ -94,7 +96,7 @@ public class AdminController {
                 }
             }
 
-        } while (intentos >= 0 && opcion != 7);
+        } while (intentos >= 0 && opcion != 8);
 
     }
 

@@ -39,7 +39,7 @@ public class DetalleReservaDAO {
 
     public ArrayList<DetalleReservaDTO> listarPorReserva(int idReserva){
         ArrayList<DetalleReservaDTO> detalles=new ArrayList<>();
-        String sql="SELECT * FROM DETALLE_RESERVA WHERE ID=?";
+        String sql="SELECT * FROM DETALLE_RESERVA WHERE ID_RESERVA=?";
         try (PreparedStatement ps= conexion.prepareStatement(sql)) {
             ps.setInt(1, idReserva);
             try(ResultSet rs= ps.executeQuery()){
@@ -57,6 +57,27 @@ public class DetalleReservaDAO {
             System.out.println("Error al listar los detalles de la reserva: "+e.getMessage());
         }
         return detalles;
+    }
+
+    public DetalleReservaDTO buscarPorId(int id){
+        String sql ="SELECT * FROM DETALLE_RESERVA WHERE ID=?";
+        try (PreparedStatement ps = conexion.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if(rs.next()){
+                    DetalleReservaDTO r= new DetalleReservaDTO();
+                    r.setId(rs.getInt("ID"));
+                    r.setId_reserva(rs.getInt("ID_RESERVA"));
+                    r.setId_plato(rs.getInt("ID_PLATO"));
+                    r.setCantidad(rs.getInt("CANTIDAD"));
+                    r.setPrecio_plato(rs.getDouble("PRECIO_PLATO"));
+                    return r;
+                }
+            } 
+        } catch (SQLException e) {
+            System.out.println("Error al buscar por ID "+e.getMessage());
+        }
+        return null;
     }
 
     public boolean eliminarLinea(int idDetalle){
