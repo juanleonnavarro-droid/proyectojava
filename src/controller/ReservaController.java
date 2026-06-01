@@ -115,7 +115,8 @@ public class ReservaController {
             System.out.println("3. Verificar mesas excedidas de tiempo");
             System.out.println("4. Cancelar reserva");
             System.out.println("5. Buscar reserva por ID");
-            System.out.println("6. Salir");
+            System.out.println("6. Mostrar todas las reservas");
+            System.out.println("7. Salir");
             try {
                 opc = Integer.parseInt(entrada.nextLine());
             } catch (NumberFormatException e) {
@@ -232,13 +233,17 @@ public class ReservaController {
                     }
                     break;
                 case 6:
+                    System.out.println("Reservas:");
+                    System.out.println(r.mostrarReservas());
+                    break;
+                case 7:
                     System.out.println("Saliendo...");
                     break;
                 default:
                     System.out.println("Introduce una opción válida");
                     break;
             }
-        } while (opc != 6);
+        } while (opc != 7);
 
     }
 }

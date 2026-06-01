@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -142,5 +143,27 @@ public class ReservaDAO {
             System.out.println("Error al encontrar la reserva: " + e.getMessage());
         }
         return null;
+    }
+
+    public ArrayList<ReservaDTO> mostrarReservas(){
+        ArrayList<ReservaDTO> reservas= new ArrayList<>();
+        String sql= "Select * from reserva";
+        try (PreparedStatement ps = conexion.prepareStatement(sql);
+            ResultSet rs = ps.executeQuery()) {
+            while(rs.next()){
+                ReservaDTO r = new ReservaDTO();
+                r.setId(rs.getInt("ID"));
+                r.setDniCliente(rs.getString("DNI_CLIENTE"));
+                r.setIdMesa(rs.getInt("ID_MESA"));
+                r.setIdEmpleado(rs.getInt("ID_EMPLEADO"));
+                r.setFecha(rs.getTimestamp("FECHA").toLocalDateTime());
+                r.setComensales(rs.getInt("COMENSALES"));
+                r.setImporteTotal(rs.getDouble("IMPORTE_TOTAL"));
+                reservas.add(r);
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al listar las reservas "+e.getMessage());
+        }
+        return reservas;
     }
 }
