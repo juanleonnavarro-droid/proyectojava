@@ -8,20 +8,56 @@ import dto.DetalleReservaDTO;
 import dto.PlatoDTO;
 import dto.ReservaDTO;
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.Scanner;
 import util.DatosInvalidosException;
 
+/**
+ * Esta clase funciona como el menú interactivo para gestionar los platos que se
+ * piden en cada reserva. Permite añadir platos a una mesa, quitarlos, ver la
+ * comanda completa de una reserva o buscar un apunte específico.
+ *
+ * @author Juan Leon Navarro
+ */
 public class DetalleReservaController {
 
     private Conexion con = new Conexion();
     private Connection conexion = null;
     private Scanner entrada;
 
+    /**
+     * Prepara el controlador de detalles abriendo la conexión con la base de
+     * datos y dejando listo el Scanner para las respuestas del usuario.
+     */
     public DetalleReservaController() {
         conexion = con.abrirConexion();
-        entrada = new Scanner(System.in);
+        entrada = new Scanner(System.in, "UTF-8");
     }
 
+    /**
+     * Abre el menú en la consola con todas las opciones para gestionar los
+     * platos de las reservas.
+     * <p>
+     * Este método se encarga de pintar las opciones en pantalla y controlar los
+     * pasos del usuario:
+     * <ul>
+     * <li>Opción 1 (Insertar): Pide una reserva, comprueba que exista, pide un
+     * plato, mira si está disponible en la cocina, pregunta cuántas raciones se
+     * quieren y calcula el precio para guardarlo en la cuenta.</li>
+     * <li>Opción 2 (Eliminar): Busca una línea de pedido por su ID y la borra
+     * (por si el cliente se arrepiente de un plato).</li>
+     * <li>Opción 3 (Listar): Muestra en una lista ordenada todo lo que ha
+     * pedido una mesa en concreto.</li>
+     * <li>Opción 4 (Buscar): Localiza y muestra los datos de una sola línea de
+     * consumición usando su ID.</li>
+     * </ul>
+     * El método está protegido para que, si el usuario escribe una letra en vez
+     * de un número, el programa no se rompa y le avise amablemente.
+     * </p>
+     *
+     * @throws DatosInvalidosException Si al intentar guardar un plato en la
+     * base de datos los datos introducidos no son correctos o lógicos.
+     */
     public void mostrarMenu() throws DatosInvalidosException {
         int opc = 0;
         int idABuscar = 0;
@@ -100,7 +136,9 @@ public class DetalleReservaController {
                                         e.getMessage();
                                     }
                                 }
-                            } else System.out.println("El plato no está disponible");
+                            } else {
+                                System.out.println("El plato no está disponible");
+                            }
 
                         } else {
                             System.out.println("Plato con ID " + idABuscar + " no encontrado");
@@ -144,7 +182,8 @@ public class DetalleReservaController {
                         System.out.println("Reserva encontrada");
                         System.out.println(rdto.toString());
                         System.out.println("Lista de líneas de detalle");
-                        System.out.println(drdao.listarPorReserva(rdto.getId()));
+                        ArrayList<DetalleReservaDTO> detalles = drdao.listarPorReserva(rdto.getId());
+                        detalles.stream().forEach(dr -> System.out.println(dr));
                     } else {
                         System.out.println("No se ha encontrado ninguna reserva con ID " + idABuscar);
                     }

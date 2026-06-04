@@ -13,9 +13,22 @@ import java.sql.Connection;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Scanner;
 import util.DatosInvalidosException;
 
+/**
+ * Esta clase es el centro de control total de la aplicación para
+ * administradores.
+ * <p>
+ * Requiere una autenticación de usuario y contraseña ("admin"/"admin") con un
+ * límite de 3 intentos. Una vez dentro, despliega un menú en el que se puede
+ * acceder a la gestión de platos, empleados, clientes, reservas, mesas,
+ * categorías y detalles de reserva.
+ * </p>
+ *
+ * @author Juan Leon Navarro
+ */
 public class AdminController {
 
     private Conexion con = new Conexion();
@@ -24,11 +37,29 @@ public class AdminController {
     private static String usr = "admin";
     private static String pass = "admin";
 
+    /**
+     * Inicializa el controlador de administración estableciendo la conexión con
+     * la base de datos y preparando el Scanner para capturar las credenciales y
+     * opciones.
+     */
     public AdminController() {
         conexion = con.abrirConexion();
-        entrada = new Scanner(System.in);
+        entrada = new Scanner(System.in, "UTF-8");
     }
 
+    /**
+     * Gestiona el sistema de login por consola y despliega el menú de
+     * administrador.
+     * <p>
+     * El método bloquea el acceso con un bucle de hasta 3 intentos. Si las
+     * credenciales son correctas, abre el menú que permite saltar a la
+     * administración de cada entidad.
+     * </p>
+     *
+     * @throws DatosInvalidosException Si al interactuar con los otros
+     * controladores (como Clientes o Reservas) se procesan datos incorrectos
+     * que levanten la excepción.
+     */
     public void mostrarMenu() throws DatosInvalidosException {
         int intentos = 3;
         String usu;
@@ -73,7 +104,7 @@ public class AdminController {
                                 menuCategorias();
                                 break;
                             case 7:
-                                DetalleReservaController dreservactrl= new DetalleReservaController();
+                                DetalleReservaController dreservactrl = new DetalleReservaController();
                                 dreservactrl.mostrarMenu();
                                 break;
                             case 8:
@@ -100,6 +131,22 @@ public class AdminController {
 
     }
 
+    /**
+     * Abre el menú interactivo para la gestión de platos.
+     * <p>
+     * Ofrece un CRUD completo sobre la base de datos de platos (Insertar,
+     * Modificar, Eliminar, Listar y Buscar), vinculándolos con su categoría.
+     * Además incluye lo siguiente:
+     * <ul>
+     * <li>Top 5 más vendidos: Muestra los 5 platos que más se venden.</li>
+     * <li>Baja rotación: Analiza qué platos no han tenido salidas en un mes
+     * concreto.</li>
+     * </ul>
+     * </p>
+     *
+     * @throws DatosInvalidosException Si el nombre, precio o la validación del
+     * DTO del plato fallan al intentar guardarse.
+     */
     public void menuPlatos() throws DatosInvalidosException {
         int opc = 0;
         PlatoDTO plato = new PlatoDTO();
@@ -132,22 +179,33 @@ public class AdminController {
                     plato.setPrecio(Double.parseDouble(entrada.nextLine()));
                     System.out.println("Introduzca la ID de la categoría a la que pertenece");
                     System.out.println(c.listarCategorias());
-                    plato.setIdCategoria(Integer.parseInt(entrada.nextLine()));
+                    try {
+                        plato.setIdCategoria(Integer.parseInt(entrada.nextLine()));
+                    } catch (NumberFormatException e) {
+                        System.out.println("El ID de la categoría tiene que ser un número entero");
+                        return;
+                    }
                     plato.setDisponibilidad(true);
-                    if (plato.validarDatos()) {
-                        boolean insertadoOk = p.insertarPlato(plato);
-                        if (insertadoOk) {
-                            System.out.println("Se ha insertado el plato correctamente");
-                            System.out.println(plato.toString());
+                    CategoriaDTO cat = new CategoriaDTO();
+                    cat = c.buscarPorId(plato.getIdCategoria());
+                    if (cat != null) {
+                        if (plato.validarDatos()) {
+                            boolean insertadoOk = p.insertarPlato(plato);
+                            if (insertadoOk) {
+                                System.out.println("Se ha insertado el plato correctamente");
+                                System.out.println(plato.toString());
+                            } else {
+                                System.out.println("Error al insertar el plato");
+                            }
                         } else {
-                            System.out.println("Error al insertar el plato");
+                            try {
+                                throw new DatosInvalidosException("Los datos introducidos no son válidos");
+                            } catch (DatosInvalidosException e) {
+                                System.out.println("Los datos introducidos no son válidos");
+                            }
                         }
                     } else {
-                        try {
-                            throw new DatosInvalidosException("Los datos introducidos no son válidos");
-                        } catch (DatosInvalidosException e) {
-                            System.out.println("Los datos introducidos no son válidos");
-                        }
+                        System.out.println("No se ha encontrado ninguna categoría con ID " + plato.getIdCategoria());
                     }
                     break;
                 case 2:
@@ -170,22 +228,33 @@ public class AdminController {
                         plato.setPrecio(Double.parseDouble(entrada.nextLine()));
                         System.out.println("A que categoria pertenece??");
                         System.out.println(c.listarCategorias());
-                        plato.setIdCategoria(Integer.parseInt(entrada.nextLine()));
-                        plato.setDisponibilidad(true);
-                        if (plato.validarDatos()) {
-                            boolean modificarOk = p.modificarPlato(plato);
-                            if (modificarOk) {
-                                System.out.println("Se ha modificado el plato correctamente");
-                                System.out.println(plato.toString());
+                        try {
+                            plato.setIdCategoria(Integer.parseInt(entrada.nextLine()));
+                        } catch (NumberFormatException e) {
+                            System.out.println("El ID de la categoría tiene que ser un número entero");
+                            return;
+                        }
+                        cat = new CategoriaDTO();
+                        cat = c.buscarPorId(plato.getIdCategoria());
+                        if (cat != null) {
+                            plato.setDisponibilidad(true);
+                            if (plato.validarDatos()) {
+                                boolean modificarOk = p.modificarPlato(plato);
+                                if (modificarOk) {
+                                    System.out.println("Se ha modificado el plato correctamente");
+                                    System.out.println(plato.toString());
+                                } else {
+                                    System.out.println("Error al modificar el plato");
+                                }
                             } else {
-                                System.out.println("Error al modificar el plato");
+                                try {
+                                    throw new DatosInvalidosException("Los datos introducidos no son válidos");
+                                } catch (DatosInvalidosException e) {
+                                    System.out.println("Los datos introducidos no son válidos");
+                                }
                             }
                         } else {
-                            try {
-                                throw new DatosInvalidosException("Los datos introducidos no son válidos");
-                            } catch (DatosInvalidosException e) {
-                                System.out.println("Los datos introducidos no son válidos");
-                            }
+                            System.out.println("La categoría con ID " + plato.getIdCategoria() + " no se ha encontrado");
                         }
 
                     } else {
@@ -208,8 +277,9 @@ public class AdminController {
                     }
                     break;
                 case 4:
+                    ArrayList<PlatoDTO> listaplatos = p.listarPlatos();
                     System.out.println("Lista de platos:");
-                    System.out.println(p.listarPlatos());
+                    listaplatos.stream().forEach(platos -> System.out.println(platos.toString()));
                     break;
                 case 5:
                     System.out.println("Introduzca el ID del plato a buscar:");
@@ -250,6 +320,21 @@ public class AdminController {
         } while (opc != 8);
     }
 
+    /**
+     * Despliega el menú para el control de los empleados del restaurante.
+     * <p>
+     * Además de permitir las altas, modificaciones y búsquedas de las fichas
+     * (nombres, cargos, turnos y experiencia), incorpora una utilidad:
+     * <ul>
+     * <li>Calcular comisión: Solicita un rango de fechas (con validación de
+     * formato dd/MM/yyyy) y calcula de forma automática los extras que le
+     * corresponden a un empleado según su rendimiento en ese periodo.</li>
+     * </ul>
+     * </p>
+     *
+     * @throws DatosInvalidosException Si las propiedades del empleado no son
+     * válidas.
+     */
     public void menuEmpleados() throws DatosInvalidosException {
         LocalDate inicio = null;
         LocalDate fin = null;
@@ -323,6 +408,8 @@ public class AdminController {
                                 System.out.println("Los datos introducidos no son válidos");
                             }
                         }
+                    } else {
+                        System.out.println("No se encontró ningún empleado con ID " + idABuscar);
                     }
                     break;
                 case 3:
@@ -337,8 +424,9 @@ public class AdminController {
                     }
                     break;
                 case 4:
+                    ArrayList<EmpleadoDTO> empleados = e.listarEmpleados();
                     System.out.println("Lista de empleados:");
-                    System.out.println(e.listarEmpleados());
+                    empleados.stream().forEach(emple -> System.out.println(emple.toString()));
                     break;
                 case 5:
                     System.out.println("Introduce el ID del empleado para calcular la comisión");
@@ -381,6 +469,22 @@ public class AdminController {
 
     }
 
+    /**
+     * Controla las mesas del establecimiento y su estado actual.
+     * <p>
+     * Permite registrar nuevas mesas asignándoles una capacidad máxima y
+     * clasificándolas entre la "Terraza", el "Salón Principal" o la "Zona
+     * Privada". Facilita el cambio de estado (Libre, Reservada, Ocupada) y
+     * ofrece una métrica en tiempo real:
+     * <ul>
+     * <li>Ocupación por zona: Calcula el porcentaje (%) de mesas ocupadas en
+     * una sección.</li>
+     * </ul>
+     * </p>
+     *
+     * @throws DatosInvalidosException Si se intenta configurar una mesa con
+     * datos incoherentes.
+     */
     public void menuMesas() throws DatosInvalidosException {
         String zona = "";
         String estado = "";
@@ -412,26 +516,28 @@ public class AdminController {
                         System.out.println("Introduce un número válido");
                         break;
                     }
-                    System.out.println("En qué zona está la mesa?? (1. Terraza, 2. Salón Principal, 3. Zona Privada)");
                     try {
-                        opc = Integer.parseInt(entrada.nextLine());
-                        switch (opc) {
-                            case 1:
-                                System.out.println("Zona: Terraza seleccionada");
-                                zona = "Terraza";
-                                break;
-                            case 2:
-                                System.out.println("Zona: Salón Principal seleccionada");
-                                zona = "Salón Principal";
-                                break;
-                            case 3:
-                                System.out.println("Zona: Zona Privada seleccionada");
-                                zona = "Zona privada";
-                                break;
-                            default:
-                                System.out.println("Elija una opción válida");
-                                break;
-                        }
+                        do {
+                            System.out.println("En qué zona está la mesa?? (1. Terraza, 2. Salón Principal, 3. Zona Privada)");
+                            opc = Integer.parseInt(entrada.nextLine());
+                            switch (opc) {
+                                case 1:
+                                    System.out.println("Zona: Terraza seleccionada");
+                                    zona = "Terraza";
+                                    break;
+                                case 2:
+                                    System.out.println("Zona: Salón Principal seleccionada");
+                                    zona = "Salón Principal";
+                                    break;
+                                case 3:
+                                    System.out.println("Zona: Zona Privada seleccionada");
+                                    zona = "Zona privada";
+                                    break;
+                                default:
+                                    System.out.println("Elija una opción válida");
+                                    break;
+                            }
+                        } while (opc != 3 && opc != 2 && opc != 1);
                     } catch (NumberFormatException e) {
                         System.out.println("Elija un número válido");
                     }
@@ -661,7 +767,8 @@ public class AdminController {
                     break;
                 case 7:
                     System.out.println("Lista de mesas:");
-                    System.out.println(m.listarMesas());
+                    ArrayList<MesaDTO> mesas = m.listarMesas();
+                    mesas.stream().forEach(mmesa -> System.out.println(mmesa));
                     break;
                 case 8:
                     System.out.println("Saliendo...");
@@ -673,6 +780,17 @@ public class AdminController {
         } while (opc != 8);
     }
 
+    /**
+     * Ofrece un menú para la organización de las categorías.
+     * <p>
+     * Permite dar de alta nuevas categorías de productos (por
+     * ejemplo: "Entrantes", "Postres", "Vinos"), así como listar las existentes
+     * o buscarlas mediante su ID.
+     * </p>
+     *
+     * @throws DatosInvalidosException Si el nombre de la categoría es inválido
+     * o se procesa de forma incorrecta.
+     */
     public void menuCategorias() throws DatosInvalidosException {
         CategoriaDAO c = new CategoriaDAO(conexion);
         CategoriaDTO categoria = new CategoriaDTO();
@@ -711,7 +829,8 @@ public class AdminController {
                     break;
                 case 2:
                     System.out.println("Lista de categorías:");
-                    System.out.println(c.listarCategorias());
+                    ArrayList<CategoriaDTO> categorias = c.listarCategorias();
+                    categorias.stream().forEach(cc -> System.out.println(cc));
                     break;
                 case 3:
                     System.out.println("Inserte el id de la categoría a buscar");

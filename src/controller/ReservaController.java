@@ -13,9 +13,18 @@ import java.sql.Connection;
 import java.time.DateTimeException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Scanner;
 import util.DatosInvalidosException;
 
+/**
+ * Esta clase controla todo lo relacionado con las reservas. Se encarga de
+ * interactuar directamente con el usuario por consola, mostrándole menús,
+ * leyendo lo que escribe por teclado y conectando esas respuestas con las bases
+ * de datos.
+ *
+ * @author Juan Leon Navarro
+ */
 public class ReservaController {
 
     private Conexion con = new Conexion();
@@ -24,11 +33,27 @@ public class ReservaController {
     private String zona;
     DateTimeFormatter formateador = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
+    /**
+     * Prepara el controlador de reservas. Lo que hace es abrir la conexión con
+     * la base de datos y configurar el Scanner para recibir lo que escriba el
+     * usuario.
+     */
     public ReservaController() {
         conexion = con.abrirConexion();
-        entrada = new Scanner(System.in);
+        entrada = new Scanner(System.in, "UTF-8");
     }
 
+    /**
+     * Este es el menú público para que un cliente pueda hacer una reserva por
+     * su cuenta.
+     * <p>
+     * El método guía al cliente paso a paso: primero le pide el DNI para
+     * comprobar que ya está registrado, si es así, le pregunta en qué zona
+     * quiere sentarse, cuántas personas van a ir y en qué fecha y hora. Tras
+     * validar que todo sea correcto, busca una mesa libre de forma automática y
+     * confirma la reserva.
+     * </p>
+     */
     public void mostrarMenu() {
         LocalDateTime fechaHoraReserva = null;
 
@@ -103,6 +128,23 @@ public class ReservaController {
         }
     }
 
+    /**
+     * Este es el panel de control exclusivo para los administradores.
+     * <p>
+     * Muestra un menú interactivo con opciones de gestión, tales como:
+     * <ul>
+     * <li>Ver cuánto dinero se ha facturado en cada turno del día.</li>
+     * <li>Modificar las fechas, mesas o camareros de una reserva ya hecha.</li>
+     * <li>Liberar de forma automática las mesas de clientes que ya llevan
+     * demasiado tiempo comiendo.</li>
+     * <li>Cancelar reservas, buscar una concreta por su número o listar todas
+     * las que hay.</li>
+     * </ul>
+     * </p>
+     *
+     * @throws DatosInvalidosException Si el administrador introduce datos que
+     * no cuadran o no son válidos al modificar una reserva.
+     */
     public void mostrarMenuAdmin() throws DatosInvalidosException {
         ReservaDTO reserva = new ReservaDTO();
         int idABuscar = 0;
@@ -166,26 +208,30 @@ public class ReservaController {
                             }
                             System.out.println("Introduce el nuevo número de comensales");
                             reserva.setComensales(Integer.parseInt(entrada.nextLine()));
+                            if (reserva.getComensales() <= mesa.getCapacidadMaxima()) {
+                                if (reserva.validarDatos()) {
+                                    boolean modificarOk = r.modificarReserva(reserva);
+                                    if (modificarOk) {
+                                        System.out.println("Reserva modificada correctamente");
+                                        System.out.println(reserva.toString());
+                                    } else {
+                                        System.out.println("Error al modificar la reserva");
+                                    }
+                                } else {
+                                    try {
+                                        throw new DatosInvalidosException("Los datos introducidos no son válidos");
+                                    } catch (DatosInvalidosException ex) {
+                                        System.out.println("Los datos introducidos no son válidos");
+                                    }
+                                }
+                            } else {
+                                System.out.println("La capacidad de la mesa es menor a los comensales que asistirán a la reserva");
+                            }
                         } catch (NumberFormatException e) {
                             System.out.println("El ID y los comensales tienen que ser número enteros");
                             return;
                         }
 
-                        if (reserva.validarDatos()) {
-                            boolean modificarOk = r.modificarReserva(reserva);
-                            if (modificarOk) {
-                                System.out.println("Reserva modificada correctamente");
-                                System.out.println(reserva.toString());
-                            } else {
-                                System.out.println("Error al modificar la reserva");
-                            }
-                        } else {
-                            try {
-                                throw new DatosInvalidosException("Los datos introducidos no son válidos");
-                            } catch (DatosInvalidosException e) {
-                                System.out.println("Los datos introducidos no son válidos");
-                            }
-                        }
                     } else {
                         System.out.println("No se ha encontrado una reserva con ID " + idABuscar);
                     }
@@ -217,7 +263,7 @@ public class ReservaController {
                     }
                     break;
                 case 5:
-                    System.out.println("Introduce el ID de la reserva a cancelar");
+                    System.out.println("Introduce el ID de la reserva a buscar");
                     try {
                         idABuscar = Integer.parseInt(entrada.nextLine());
                     } catch (NumberFormatException e) {
@@ -234,7 +280,8 @@ public class ReservaController {
                     break;
                 case 6:
                     System.out.println("Reservas:");
-                    System.out.println(r.mostrarReservas());
+                    ArrayList<ReservaDTO> reservas = r.mostrarReservas();
+                    reservas.stream().forEach(re -> System.out.println(re));
                     break;
                 case 7:
                     System.out.println("Saliendo...");

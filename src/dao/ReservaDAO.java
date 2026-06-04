@@ -10,14 +10,51 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Clase de Acceso a Datos (DAO) encargada de realizar operaciones de las
+ * reservas en la base de datos.
+ * <p>
+ * Implementa consultas mediante PreparedStatement y llamadas a procedimientos
+ * almacenados con CallableStatement
+ * </p>
+ *
+ * * @author Juan Leon Navarro
+ */
 public class ReservaDAO {
 
     private Connection conexion;
 
+    /**
+     * Construye el DAO de reservas inyectándole una conexión activa del
+     * sistema.
+     *
+     * * @param conexion Objeto de conexión Connection compartido.
+     */
     public ReservaDAO(Connection conexion) {
         this.conexion = conexion;
     }
 
+    /**
+     * Busca una mesa libre, registra la reserva y ocupa la mesa.
+     * <p>
+     * El método realiza tres operaciones en la base de datos:
+     * <ol>
+     * <li>Busca la primera mesa libre que coincida con la ubicación (zona) y
+     * que iguale o supere la capacidad requerida.</li>
+     * <li>Inserta la reserva asignando de forma aleatoria un empleado con cargo
+     * 'Camarero'.</li>
+     * <li>Actualiza el estado de la mesa encontrada a 'Reservada'.</li>
+     * </ol>
+     * </p>
+     *
+     * * @param reserva Objeto ReservaDTO que contiene los datos base de la
+     * solicitud.
+     * @param zona Nombre de la ubicación física de la mesa solicitada (Terraza,
+     * Salón Principal...).
+     * @param numComensales Cantidad de personas asociadas a la reserva.
+     * @return true si la mesa fue encontrada y el flujo completado con éxito,
+     * false en caso contrario.
+     */
     public boolean registrarReservaAutomatica(ReservaDTO reserva, String zona, int numComensales) {
         String sqlBuscarMesa = "SELECT id FROM mesa WHERE ubicacion = ? AND capacidad_maxima >= ? AND estado = 'Libre' LIMIT 1";
         String sqlInsertar = "INSERT INTO reserva (dni_cliente, id_mesa, id_empleado, fecha, comensales) "
@@ -55,6 +92,17 @@ public class ReservaDAO {
         }
     }
 
+    /**
+     * Invoca un procedimiento almacenado de la base de datos para calcular la
+     * recaudación total dividida por turnos.
+     * <p>
+     * Realiza una llamada a facturacion_por_turno() y mapea los resultados
+     * devueltos en una estructura clave-valor
+     * </p>
+     *
+     * * @return Un Map que asocia el nombre del turno (clave) con su
+     * facturación total (valor).
+     */
     public Map<String, Double> obtenerFacturacionDiariaPorTurno() {
         Map<String, Double> mapaFacturacion = new HashMap<>();
         String sql = "{call facturacion_por_turno()}";
@@ -70,6 +118,14 @@ public class ReservaDAO {
         return mapaFacturacion;
     }
 
+    /**
+     * Actualiza los datos modificables de una reserva existente mediante su ID.
+     *
+     * * @param r Objeto ReservaDTO que contiene los datos actualizados y el ID
+     * de destino.
+     * @return true si se modificó al menos una fila en la base de datos, false
+     * si hubo un error o no existía el ID.
+     */
     public boolean modificarReserva(ReservaDTO r) {
         String sql = "UPDATE RESERVA SET FECHA = ?, ID_MESA = ?, ID_EMPLEADO = ?, COMENSALES = ? WHERE ID = ?";
 
@@ -87,6 +143,14 @@ public class ReservaDAO {
         }
     }
 
+    /**
+     * Libera las mesas cuyo tiempo de uso haya expirado.
+     * <p>
+     * Invoca el procedimiento almacenado verificar_mesas_tiempo(), el cual
+     * compara los horarios actuales y vuelve a cambiar a 'Libre' aquellas mesas
+     * que lleven ocupadas más de 3 horas.
+     * </p>
+     */
     public void verificarMesasExcedidasTiempo() {
         String sql = "{call verificar_mesas_tiempo()}";
 
@@ -103,6 +167,17 @@ public class ReservaDAO {
         }
     }
 
+    /**
+     * Elimina un registro de reserva del sistema basándose en su ID.
+     * <p>
+     * Verifica previamente la existencia real de la reserva antes de enviar la
+     * instrucción de borrado.
+     * </p>
+     *
+     * * @param id Identificador único de la reserva que se pretende eliminar.
+     * @return true si la reserva existía y fue eliminada correctamente, false
+     * si no se localizó o falló la consulta.
+     */
     public boolean cancelarReserva(int id) {
         ReservaDTO r = buscarPorID(id);
         if (r != null) {
@@ -121,8 +196,16 @@ public class ReservaDAO {
 
     }
 
+    /**
+     * Busca una reserva específica mapeando sus columnas a un objeto de
+     * transferencia.
+     *
+     * * @param id Identificador único de la reserva a buscar.
+     * @return Un objeto ReservaDTO que contiene la información de la base de
+     * datos, o null si el registro no existe.
+     */
     public ReservaDTO buscarPorID(int id) {
-        
+
         String sql = "SELECT * FROM RESERVA WHERE ID=?";
         try (PreparedStatement ps = conexion.prepareStatement(sql)) {
             ps.setInt(1, id);
@@ -145,12 +228,22 @@ public class ReservaDAO {
         return null;
     }
 
-    public ArrayList<ReservaDTO> mostrarReservas(){
-        ArrayList<ReservaDTO> reservas= new ArrayList<>();
-        String sql= "Select * from reserva";
-        try (PreparedStatement ps = conexion.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery()) {
-            while(rs.next()){
+    /**
+     * Obtiene el listado histórico y actual de todas las reservas registradas
+     * en la base de datos.
+     * <p>
+     * Recorre el conjunto de resultados y va instanciando objetos ReservaDTO
+     * para empaquetarlos dentro de una lista.
+     * </p>
+     *
+     * * @return Un ArrayList repleto de objetos ReservaDTO. Estará vacío si no
+     * hay registros.
+     */
+    public ArrayList<ReservaDTO> mostrarReservas() {
+        ArrayList<ReservaDTO> reservas = new ArrayList<>();
+        String sql = "Select * from reserva";
+        try (PreparedStatement ps = conexion.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
                 ReservaDTO r = new ReservaDTO();
                 r.setId(rs.getInt("ID"));
                 r.setDniCliente(rs.getString("DNI_CLIENTE"));
@@ -162,7 +255,7 @@ public class ReservaDAO {
                 reservas.add(r);
             }
         } catch (SQLException e) {
-            System.out.println("Error al listar las reservas "+e.getMessage());
+            System.out.println("Error al listar las reservas " + e.getMessage());
         }
         return reservas;
     }

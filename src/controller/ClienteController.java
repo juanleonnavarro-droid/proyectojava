@@ -9,9 +9,13 @@ import java.util.List;
 import java.util.Scanner;
 import util.DatosInvalidosException;
 
-/*
-Para hacer:
-parte de hacer reserva (todavía no esta hecho el ReservaController)
+/**
+ * Esta clase sirve como el controlador encargado de todas las pantallas e
+ * interacciones con los clientes. Se encarga dar la opción de registrarse o ver
+ * sus consumiciones, como de ofrecer herramientas al administrador para buscar,
+ * modificar o premiar a los clientes del restaurante.
+ *
+ * @author Juan Leon Navarro
  */
 public class ClienteController {
 
@@ -19,11 +23,34 @@ public class ClienteController {
     private Connection conexion = null;
     private Scanner entrada;
 
+    /**
+     * Prepara el controlador de clientes, conectando la aplicación con la base
+     * de datos e inicializando el Scanner para capturar las opciones
+     * introducidas.
+     */
     public ClienteController() {
         conexion = con.abrirConexion();
-        this.entrada = new Scanner(System.in);
+        this.entrada = new Scanner(System.in, "UTF-8");
     }
 
+    /**
+     * Muestra el menú destinado a los propios clientes del restaurante.
+     * <p>
+     * A través de esta pantalla, un usuario puede interactuar con el sistema
+     * para:
+     * <ul>
+     * <li>Registrarse: Darse de alta introduciendo sus datos personales (DNI,
+     * Nombre, Teléfono, etc.).</li>
+     * <li>Ver historial de consumo: Introducir su DNI para comprobar la lista
+     * de platos y comandas que ha disfrutado anteriormente.</li>
+     * <li>Hacer reserva: Saltar directamente al asistente de reservas de
+     * mesa.</li>
+     * </ul>
+     * </p>
+     *
+     * @throws DatosInvalidosException Si el cliente comete un error de formato
+     * o introduce datos que no pasan la validación al registrarse.
+     */
     public void mostrarMenu() throws DatosInvalidosException {
         ClienteDTO clienteEncontrado;
         String dniAEncontrar;
@@ -81,6 +108,8 @@ public class ClienteController {
                                 System.out.println("Historial del cliente:");
                                 historial.stream().forEach(linea -> System.out.println(linea));
                             }
+                        } else {
+                            System.out.println("Cliente no registrado, para ver su historial de consumo tiene que estar registrado");
                         }
                         break;
                     case 3:
@@ -98,6 +127,27 @@ public class ClienteController {
 
     }
 
+    /**
+     * Muestra el panel de control avanzado para que el administrador gestione
+     * los clientes.
+     * <p>
+     * Este menú permite a los administradores del restaurante realizar las
+     * siguientes tareas de gestión:
+     * <ul>
+     * <li>Dar de alta de forma manual a un nuevo cliente en el sistema.</li>
+     * <li>Buscar la ficha completa de cualquier cliente utilizando su DNI.</li>
+     * <li>Modificar o actualizar los datos de contacto de un cliente
+     * existente.</li>
+     * <li>Auditar el historial completo de visitas y consumiciones de cualquier
+     * usuario.</li>
+     * <li>Ver cliente VIP del mes: Consulta en la base de datos quién ha sido
+     * el cliente estrella que más ha reservado en el mes actual.</li>
+     * </ul>
+     * </p>
+     *
+     * @throws DatosInvalidosException Si al modificar o registrar un cliente el
+     * administrador introduce campos obligatorios vacíos o incorrectos.
+     */
     public void mostrarMenuAdmin() throws DatosInvalidosException {
         ClienteDTO clienteEncontrado;
         String dniAEncontrar;
@@ -203,6 +253,8 @@ public class ClienteController {
                                 System.out.println("Historial del cliente:");
                                 historial.stream().forEach(linea -> System.out.println(linea));
                             }
+                        } else {
+                            System.out.println("No existe ningún cliente con DNI " + dniAEncontrar);
                         }
                         break;
                     case 5:
